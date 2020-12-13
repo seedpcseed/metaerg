@@ -45,7 +45,7 @@ my $txtdir = "$bin/../txt";
     "  -f <fasta format contig file, the features were assocaited with this input file>\n".
     "  -o <output dir>\n".
     "  -d <sql3 database location>\n";
-    
+
 my $datadir = "$outdir/data";
 
 if (-d $datadir) {
@@ -114,8 +114,8 @@ sub output_htmlreport{
     copy "$templatedir/help.html", "$outdir"  or die "Copy $templatedir/help.html to $outdir/help.html failed, $!\n";
     copy "$templatedir/index.html", "$outdir"  or die "Copy $templatedir/index.html to $outdir/index.html failed, $!\n";
     copy "$templatedir/style.css", "$outdir" or die "Copy $templatedir/style.css to $outdir/style.css failed, $!\n";
-   
-    
+
+
 }
 
 sub output_master_annot_summary{
@@ -190,7 +190,7 @@ sub output_stats{
     print $stat_fh "Contig length stdev: ", stdev(\@contig_lens), "\n";
     print $stat_fh "Contig N50: ", get_N50(\@contig_lens), "\n";
 
-    
+
 
     my %count;
     for my $sid (sort {$seqHash{$b}{DNA}->length <=> $seqHash{$a}{DNA}->length} keys %$seqHash) {
@@ -209,11 +209,11 @@ sub output_stats{
 
     my $gene_predict_str = "";
     my $gene_annot_str = "";
-    
+
     for my $ft (sort keys %count) {
 	#print $stat_fh "$ft count:\t", $count{$ft}->{count}, "\n";
 	$gene_predict_str .= "$ft count:\t". $count{$ft}->{count}. "\n";
-	
+
 	if($ft eq "CDS"){
 	    $gene_annot_str .= (not exists $count{$ft}->{sprot}) ? "$ft swissprot_hit:\t0\n"  :  "$ft swissprot_hit:\t" . $count{$ft}->{sprot} . "\n";
 	    $gene_annot_str .= (not exists $count{$ft}->{pfam}) ? "$ft pfam_hit:\t0\n"  :  "$ft pfam_hit:\t" . $count{$ft}->{pfam} . "\n";
@@ -225,7 +225,7 @@ sub output_stats{
 	elsif($ft =~ /SrRNA/){
 	    $gene_annot_str .= (exists $count{$ft}->{rRNA_taxon}) ?  "$ft SILVA database search hits:\t" . $count{$ft}->{rRNA_taxon} . "\n" : "$ft silva database searching hits:\t0\n";
 	}
-	
+
     }
     print $stat_fh "##############gene prediction stats#############\n";
     print $stat_fh $gene_predict_str;
@@ -271,7 +271,7 @@ sub output_fasta{
         #my $ctg = $seqHash->{$sid}{DNA};
 	next if not exists $seqHash->{$sid}{FEATURE};
         for my $f ( sort { $a->start <=> $b->start } @{ $seqHash->{$sid}{FEATURE}}) {
-	    
+
             next if $f->primary_tag =~ /transmembrane_helix|signal_peptide/;
             my $s = $f->location->start;
 	    my $e = $f->location->end;
@@ -285,7 +285,7 @@ sub output_fasta{
             my $len = $f->length;
 	    my $desc = "";
 	    my $score = $f->score;
-	    
+
             if ($f->primary_tag eq 'CDS'){
 		if($f->has_tag('sprot_desc')){
 		    $desc =  $f->has_tag('sprot_desc') ? TAG($f, 'sprot_desc') : "";
@@ -335,7 +335,7 @@ sub output_fasta{
                 $desc .=  $f->has_tag('Name') ? TAG($f, 'Name') : "";
                 $desc .= " \/rRNA_taxon=";
                 $desc .=  $f->has_tag('rRNA_taxon') ? TAG($f, 'rRNA_taxon') : "";
-		
+
                 $p->desc("$desc /cid=$sid");
                 $s18_fh->write_seq($p);
             }
@@ -405,14 +405,14 @@ sub output_tbl{
 	    print {$tbl_fh} "\t\t\tID\t", ($f->get_tag_values("ID"))[0], "\n" if $f->has_tag("ID");
 
 	    foreach my  $ftag ($f->all_tags()){
-		if($ftag ne "ID" 
-		   && $ftag ne "score" 
-		   && $ftag ne "samplePlevel" 
+		if($ftag ne "ID"
+		   && $ftag ne "score"
+		   && $ftag ne "samplePlevel"
 		   && $ftag ne "sampleDepth"
 		   && $ftag ne "pfam_go" && $ftag ne "tigrfam_ec"
 		   && $ftag ne "sprot_kegg" && $ftag ne "sprot_kos" && $ftag ne "sprot_ecs" && $ftag ne "sprot_go" && $ftag ne "sprot_ec"
 		   && $ftag ne "foam_ecs" && $ftag ne "tigrfam_ecs" && $ftag ne "foam_acc" && $ftag ne "foam_target" && $ftag ne "foam_kos"){
-		    
+
 		    print {$tbl_fh} "\t\t\t$ftag";
 
 		    foreach my $value ($f->get_tag_values($ftag)){
@@ -433,27 +433,27 @@ sub uniq {
 }
 
 sub output_geneAnnotation{
-    
+
     my($seqHash, $outdir) = @_;
-    
+
     my $types = "tRNA:crispr:rRNA:sprot:tigrfam:pfam:casgene:metabolic:genomedb:ec:ko:go";
-    
+
     my @annots = split(/:/, $types);
     my %annot_tab_file_handler = ();
     my %annot_json_file_handler = ();
-    
+
     my @element_header = ("Gene", "Contig", "Start", "End", "Gene_Length", "Strand", "Feature");
     my @common_header = ("Gene", "Contig", "Start", "End", "Gene_Length", "Strand", "SP", "TM");
-    
+
     my $tRNA_datatable_str = "data = [\n";
     my $rRNA_datatable_str = "data = [\n";
     my $crispr_datatable_str = "data = [\n";
     my %ec2genes = ();
     my %ko2genes = ();
-    
+
     foreach my $type (@annots){
 	print STDERR "type=$type\n";
-	
+
 	if($type =~ /tRNA|crispr|rRNA/){
 	    open $annot_tab_file_handler{$type}, ">", "$outdir/$type.tab.txt" or die "Could not open $outdir/$type.tab.txt to write, $!\n";
 	    open $annot_json_file_handler{$type}, ">", "$outdir/$type.datatable.json" or die "Could not open $outdir/$type.datatable.json to write, $!\n";
@@ -467,8 +467,8 @@ sub output_geneAnnotation{
 		open $annot_tab_file_handler{"gene2ec"}, ">", "$outdir/cds.gene2ec.mapping.txt" or die "Could not open $outdir/cds.gene2ec.mapping.txt to write, $!\n";
 	    }
 	}
-	
-	
+
+
 	my @header = ();
 	if($type eq "crispr"){
 	    push(@header, "numRepeat");
@@ -478,14 +478,14 @@ sub output_geneAnnotation{
 	elsif($type eq "tRNA"){
 	    push(@header, "tRNA-isoacceptor-anticodon");
 	    print {$annot_tab_file_handler{"tRNA"}} "#", join("\t", (@element_header, @header)), "\n";
-	    
+
 	}
 	elsif($type eq "rRNA"){
 	push(@header, "Taxonomy");
 	print {$annot_tab_file_handler{"rRNA"}} "#", join("\t", (@element_header, @header)), "\n";
 	}
 	elsif($type eq "sprot"){
-	    
+
 	    push(@header, "sprot_id");
 	    push(@header, "sprot_desc");
 	    push(@header, "Taxonomy");
@@ -500,62 +500,62 @@ sub output_geneAnnotation{
 	    print {$annot_tab_file_handler{"pfam"}} "#", join("\t", (@common_header, @header)), "\n";
 	}
 	elsif($type eq "tigrfam"){
-	    
+
 	    push(@header, "tigrfam_acc");
 	    push(@header, "tigrfam_desc");
 	    push(@header, "Taxonomy");
 	    print {$annot_tab_file_handler{"tigrfam"}} "#", join("\t", (@common_header, @header)), "\n";
 	}
 	elsif($type eq "casgene"){
-	    
+
 	    push(@header, "casgene_name");
 	    push(@header, "casgene_acc");
 	    push(@header, "Taxonomy");
 	    print {$annot_tab_file_handler{"casgene"}} "#", join("\t", (@common_header, @header)), "\n";
 	}
 	elsif($type eq "metabolic"){
-	    
+
 	    push(@header, "metabolic_acc");
 	    push(@header, "metabolic_process");
 	    push(@header, "Taxonomy");
 	    print {$annot_tab_file_handler{"metabolic"}} "#", join("\t", (@common_header, @header)), "\n";
 	}
 	elsif($type eq "genomedb"){
-	    
+
 	    push(@header, "genomedb_acc");
 	    push(@header, "Taxonomy");
 	    print {$annot_tab_file_handler{"genomedb"}} "#", join("\t", (@common_header, @header)), "\n";
 	}
 	elsif($type eq "ec"){
-	    
+
 	    push(@header, "ec_id");
 	    push(@header, "ec_name");
 	    push(@header, "Taxonomy");
 	    print {$annot_tab_file_handler{"ec"}} "#", join("\t", (@common_header, @header)), "\n";
 	}
 	elsif($type eq "ko"){
-	    
+
 	    push(@header, "koid");
 	    push(@header, "ko_name");
 	    push(@header, "ko_definition");
 	    push(@header, "Taxonomy");
 	    print {$annot_tab_file_handler{"ko"}} "#", join("\t", (@common_header, @header)), "\n";
-	    
+
 	}
 	elsif($type eq "go"){
-	    
+
 	    push(@header, "go_id");
 	    push(@header, "Taxonomy");
 	    print {$annot_tab_file_handler{"go"}} "#", join("\t", (@common_header, @header)), "\n";
-	    
+
 	}
     }
-    
-    
+
+
     for my $sid (sort {$seqHash{$b}{DNA}->length <=> $seqHash{$a}{DNA}->length} keys %$seqHash) {
 	next if not exists $seqHash->{$sid}{FEATURE};
         for my $f ( sort { $a->start <=> $b->start } @{ $seqHash->{$sid}{FEATURE}}) {
-	    
+
 	    my $type = $f->primary_tag;
 		#next if $type !~ /$feature/;
 		#next if !$f->has_tag($types);
@@ -577,11 +577,11 @@ sub output_geneAnnotation{
 		#if($f->has_tag("genomedb_OC")){
 		#my $value = ($f->get_tag_values("genomedb_OC"))[0];
 		#($taxon) = $value =~ /(^[^;]*;[^;]*)/;
-		
+
 		#}
 		my $datatable_str = "";
 		#@element_header = ("Gene", "Contig", "Start", "End", "Gene_Length", "Strand", "Feature");
-		
+
 		if($type =~ /tRNA|rRNA|repeat_region/){
 		    $datatable_str .= (' ' x 2) . "{\n";
 		    $datatable_str .= (' ' x 2) . "\"geneid\": \"$featureid\",\n";
@@ -592,8 +592,8 @@ sub output_geneAnnotation{
 		    $datatable_str .= (' ' x 2) . "\"strand\": \"$strand\",\n";
 		    $datatable_str .= (' ' x 2) . "\"feature\": \"$type\",\n";
 		}
-		
-		
+
+
 		if(exists $annot_tab_file_handler{"crispr"} && $type eq "repeat_region"){
 		    my $count = $f->get_tag_values("rpt_unit_seq");
 		    for (my $i = 0; $i < $count; $i++){
@@ -605,7 +605,7 @@ sub output_geneAnnotation{
 			$crispr_datatable_str .= (' ' x 2) . "\"rpt_unit_seq\": \"$rpt_unit_seq\"\n";
 			$crispr_datatable_str .=(' ' x 2) . "},\n";
 		    }
-		    
+
 		}
 		if(exists $annot_tab_file_handler{"tRNA"} && $type eq "tRNA"){
 		    my $count = $f->has_tag("name") ? $f->get_tag_values("name") : 0;
@@ -613,12 +613,12 @@ sub output_geneAnnotation{
 			my $name = ($f->get_tag_values("name"))[$i];
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand,$type, $name);
 			print {$annot_tab_file_handler{"tRNA"}} join("\t", @row), "\n";
-			
+
 			$tRNA_datatable_str .= $datatable_str;
 			$tRNA_datatable_str .= (' ' x 2) . "\"name\": \"$name\"\n";
 			$tRNA_datatable_str .=(' ' x 2) . "},\n";
 		    }
-		    
+
 		}
 		if(exists $annot_tab_file_handler{"rRNA"} && $type =~ /SrRNA/){
 		    my $count = $f->has_tag("rRNA_taxon") ? $f->get_tag_values("rRNA_taxon") : 0;
@@ -630,9 +630,9 @@ sub output_geneAnnotation{
 			$rRNA_datatable_str .= $datatable_str;
 			$rRNA_datatable_str .= (' ' x 2) . "\"taxon\": \"$taxon\"\n";
 			$rRNA_datatable_str .=(' ' x 2) . "},\n";
-			
+
 		    }
-		    
+
 		}
 		if(exists $annot_tab_file_handler{"sprot"} && $f->has_tag("sprot_target")){
 		    my $count = $f->get_tag_values("sprot_id");
@@ -643,9 +643,9 @@ sub output_geneAnnotation{
 			$taxon =~ s/\n//g;
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand, $sp, $tm, $sprotid, "\"$desc\"", $taxon);
 			print {$annot_tab_file_handler{"sprot"}} join("\t", @row), "\n";
-			
+
 		    }
-		    
+
 		}
 		if(exists $annot_tab_file_handler{"pfam"} && $f->has_tag("pfam_acc")){
 		    my $count = $f->get_tag_values("pfam_acc");
@@ -653,10 +653,10 @@ sub output_geneAnnotation{
 			my $acc = ($f->get_tag_values("pfam_acc"))[$i];
 			my $pid = ($f->get_tag_values("pfam_id"))[$i];
 			my $desc = "\"" . ($f->get_tag_values("pfam_desc"))[$i] . "\"";
-			
+
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand, $sp, $tm, $pid, $acc, $desc,$taxon);
 			print {$annot_tab_file_handler{"pfam"}} join("\t", @row), "\n";
-			
+
 		    }
 		}
 		if(exists $annot_tab_file_handler{"tigrfam"}  && $f->has_tag("tigrfam_acc")){
@@ -667,10 +667,10 @@ sub output_geneAnnotation{
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand, $sp, $tm, $acc, $desc,$taxon);
 			print {$annot_tab_file_handler{"tigrfam"}} join("\t", @row), "\n";
 		    }
-		    
+
 		}
 		if(exists $annot_tab_file_handler{"casgene"} && $f->has_tag("casgene_acc")){
-		    
+
 		    my $count = $f->get_tag_values("casgene_acc");
 		    for (my $i = 0; $i < $count; $i++){
 			my $name = ($f->get_tag_values("casgene_name"))[$i];
@@ -680,11 +680,11 @@ sub output_geneAnnotation{
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand, $sp, $tm, $name, "\"$acc\"",$taxon);
 			print {$annot_tab_file_handler{"casgene"}} join("\t", @row), "\n";
 		    }
-		    
-		    
+
+
 		}
 		if(exists $annot_tab_file_handler{"metabolic"} && $f->has_tag("metabolic_acc")){
-		    
+
 		    my $count = $f->get_tag_values("metabolic_acc");
 		    for (my $i = 0; $i < $count; $i++){
 			my $acc = ($f->get_tag_values("metabolic_acc"))[$i];
@@ -692,8 +692,8 @@ sub output_geneAnnotation{
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand, $sp, $tm, $acc, $process,$taxon);
 			print {$annot_tab_file_handler{"metabolic"}} join("\t", @row), "\n";
 		    }
-		    
-		    
+
+
 		}
 		if(exists $annot_tab_file_handler{"genomedb"} && $f->has_tag("genomedb_acc")){
 		    my $count = $f->get_tag_values("genomedb_acc");
@@ -703,7 +703,7 @@ sub output_geneAnnotation{
 			print {$annot_tab_file_handler{"genomedb"}} join("\t", @row), "\n";
 		    }
 		}
-		
+
 		if(exists $annot_tab_file_handler{"ec"} && $f->has_tag("allec_ids")){
 		    my $count = $f->get_tag_values("allec_ids");
 		    for (my $i = 0; $i < $count; $i++){
@@ -723,31 +723,31 @@ sub output_geneAnnotation{
 			$ec2genes{$ec}->{$featureid} = 1;
 		    }
 		}
-		
+
 		if(exists $annot_tab_file_handler{"ko"} && $f->has_tag("allko_ids")){
 		    my $count = $f->get_tag_values("allko_ids");
 		    for (my $i = 0; $i < $count; $i++){
 			my $ko = ($f->get_tag_values("allko_ids"))[$i];
 			my $koname = "";
 			my $kode = "";
-			
+
 			my $stmt = "select name, de from kos where koid=\"$ko\"";
 			my $sth = $dbh->prepare( $stmt);
 			$sth->execute();
 			my $all = $sth->fetchall_arrayref();
-			
+
 			foreach my $row (@$all) {
 			    ($koname, $kode) = @$row;
 			}
 			$sth->finish();
-			
+
 
 
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand, $sp, $tm, $ko,"\"$koname\"", "\"$kode\"","\"$taxon\"");
 			print {$annot_tab_file_handler{"ko"}} join("\t", @row), "\n";
 			print {$annot_tab_file_handler{"gene2ko"}}  "$featureid\t$ko\n";
 			$ko2genes{$ko}->{$featureid} = 1;
-			
+
 		    }
 		}
 		if(exists $annot_tab_file_handler{"go"} && $f->has_tag("allgo_ids")){
@@ -759,20 +759,20 @@ sub output_geneAnnotation{
 			my $sth = $dbh->prepare( $stmt);
 			$sth->execute();
 			my $all = $sth->fetchall_arrayref();
-			
+
 			foreach my $row (@$all) {
 			    ($name) = @$row;
 			}
 			$sth->finish();
-			
+
 
 			my @row = ($featureid, $seqid, $start, $end, $len, $strand, $sp, $tm, $go, "\"$name\"", "\"$taxon\"");
 			print {$annot_tab_file_handler{"go"}} join("\t", @row), "\n";
-		
+
 		    }
 		}
 	    }
-	
+
     }
     $crispr_datatable_str =~ s/,$//;
     $crispr_datatable_str .= (' ' x 1) . "]\n";
@@ -786,26 +786,26 @@ sub output_geneAnnotation{
     $rRNA_datatable_str .= (' ' x 1) . "]\n";
     print {$annot_json_file_handler{"rRNA"}} $rRNA_datatable_str;
     close($annot_json_file_handler{"rRNA"});
-    
+
     map{close($annot_tab_file_handler{$_})} keys %annot_tab_file_handler;
     return (\%ko2genes, \%ec2genes);
 }
 sub predict_kegg_pathways{
-    
+
     my ($prefix, $ko2genes, $seqHash) = @_;
-    my $cmd = "MinPath.py -ko $prefix.mapping.txt -report $prefix.minpath -details $prefix.minpath.details > /dev/null 2>&1;";
+    my $cmd = "python /MinPath/MinPath.py -ko $prefix.mapping.txt -report $prefix.minpath -details $prefix.minpath.details > /dev/null 2>&1;";
     msg("******start running minpath $cmd\n");
     runcmd("$cmd");
-    
+
     open(INPUT, "$prefix.minpath.details") or die "Could not find $prefix.minpath.details to read\n";
     $/= "\npath";
-    
+
    #path 00010 fam0 56 fam-found 36 # Glycolysis / Gluconeogenesis
     #K00001 hits 22 # E1.1.1.1, adh
-    
+
     #my %gene2pathways = ();
     my %pathways = ();
-    
+
     while (<INPUT>) {
 	my $fams = "";
 	my @items = split(/\n/, $_);
@@ -818,7 +818,7 @@ sub predict_kegg_pathways{
 		$pathways{$pid}->{fam_all} = $total_family_num;
 		$pathways{$pid}->{fam_found} = $total_family_found;
 		$pathways{$pid}->{pname} = $name;
-		
+
 	    }
 	    elsif(my($ko, $geneCount, $koname) = $item =~ /^(\S+)\s+hits\s+(\d+?)\s+\#?\s+(\S.*)$/){
 		for my $geneid (keys %{$ko2genes->{$ko}}){
@@ -836,55 +836,55 @@ sub predict_kegg_pathways{
     for my $sid (keys %$seqHash) {
 	for my $f (@{$seqHash->{$sid}{FEATURE}}){
 	    my $geneid = ($f->get_tag_values("ID"))[0];
-	    
+
 	    next unless $f->primary_tag eq "CDS";
 	    my $oc = $f->has_tag("genomedb_OC") ? ($f->get_tag_values("genomedb_OC"))[0] : "unknow";
 	    if(exists $gene2pathways{$geneid}->{KEGG}){
-		
+
 		foreach my $pid (keys %{$gene2pathways{$geneid}->{KEGG}}){
 		    $f->add_tag_value("kegg_pathway_id", $pid);
 		    $f->add_tag_value("kegg_pathway_name", $pathways{$pid}->{pname});
-		    
+
 		    print GENE2PATHWAY "$geneid\t$pid\t\"$pathways{$pid}->{pname}\"\t\"$oc\"\n";
 		    if($gene2pathways{$geneid}->{KEGG}->{$pid} > 1){
 
 			#print "********$geneid $pid $gene2pathways{$geneid}->{$pid} times\n";
 		    }
 		}
-		
+
 	    }
 	}
     }
     close(GENE2PATHWAY);
-    
+
     foreach my $pid (keys %pathways){
 	my $tn = exists $pathways{$pid}->{fam_all} ? $pathways{$pid}->{fam_all} : 0;
 	my $tfn = exists $pathways{$pid}->{fam_found} ? $pathways{$pid}->{fam_found} : 0;
 	my $pname = exists $pathways{$pid}->{pname} ? $pathways{$pid}->{pname} : "";
 	my @kos = grep !/fam_all|fam_found|pname/, sort keys %{$pathways{$pid}};
-	
+
 	foreach my $ko (@kos){
 	    my $hits = $pathways{$pid}->{$ko}->{hits};
 	    my $koname = $pathways{$pid}->{$ko}->{name};
-	 
+
 	}
-	
+
     }
-    
+
     return \%pathways;
 }
 
 sub predict_metacyc_pathways{
-    
+
     my ($prefix, $ec2genes, $seqHash) = @_;
 
     open (DATA, "$txtdir/MetaCyc_pathways_id2name.tab.txt") or die "Could not open $txtdir/MetaCyc_pathways_id2name.tab.txt file to read\n";
-    
+
     #UNIQUE-ID	TYPES	COMMON-NAME
     my %pid2info = ();
     while (<DATA>) {
 	chomp;
-		
+
 	next if /^#/;
 	next if !/\S/;
 	my @line = split(/\t/, $_);
@@ -895,25 +895,25 @@ sub predict_metacyc_pathways{
 	#$name =~ s/<i>|<\/i>//g;
 	$pid2info{$id}->{ptype} = $line[1];
 	$pid2info{$id}->{pname} = $line[2];
-	
+
     }
     close(DATA);
-    
+
 
 
     my $cmd = "MinPath.py -any $prefix.mapping.txt -map ec2path -report $prefix.minpath -details $prefix.minpath.details > /dev/null 2>&1;";
     msg("******start running minpath $cmd\n");
     runcmd("$cmd");
-    
+
     open(INPUT, "$prefix.minpath.details") or die "Could not find $prefix.minpath.details to read\n";
     $/= "\npath";
-    
+
    #path 00010 fam0 56 fam-found 36 # Glycolysis / Gluconeogenesis
     #K00001 hits 22 # E1.1.1.1, adh
-    
+
     #my %gene2pathways = ();
     my %pathways = ();
-    
+
     while (<INPUT>) {
 	my $fams = "";
 	my @items = split(/\n/, $_);
@@ -925,7 +925,7 @@ sub predict_metacyc_pathways{
 		$pid = $id;
 		$pathways{$pid}->{fam_all} = $total_family_num;
 		$pathways{$pid}->{fam_found} = $total_family_found;
-		
+
 	    }
 	    elsif(my($ec, $geneCount) = $item =~ /^(\S+)\s+hits\s+(\d+?)/){
 		for my $geneid (keys %{$ec2genes->{$ec}}){
@@ -942,11 +942,11 @@ sub predict_metacyc_pathways{
     for my $sid (keys %$seqHash) {
 	for my $f (@{$seqHash->{$sid}{FEATURE}}){
 	    my $geneid = ($f->get_tag_values("ID"))[0];
-	    
+
 	    next unless $f->primary_tag eq "CDS";
 	    my $oc = $f->has_tag("genomedb_OC") ? ($f->get_tag_values("genomedb_OC"))[0] : "unknow";
 	    if(exists $gene2pathways{$geneid}->{metacyc}){
-		
+
 		foreach my $pid (keys %{$gene2pathways{$geneid}->{metacyc}}){
 		    #print "*****$pid***\t$pid2info{$pid}->{types}\t$pid2info{$pid}->{name}\n";
 		    $f->add_tag_value("metacyc_pathway_id", $pid);
@@ -956,12 +956,12 @@ sub predict_metacyc_pathways{
 		    $f->add_tag_value("metacyc_pathway_name", $pname);
 		    print GENE2PATHWAY "$geneid\t$pid\t\"$ptype\"\t\"$pname\"\t\"$oc\"\n";
 		}
-		
+
 	    }
 	}
     }
     close(GENE2PATHWAY);
-  
+
     foreach my $pid (keys %pathways){
 	my $tn = $pathways{$pid}->{fam_all};
 	my $tfn = $pathways{$pid}->{fam_found};
@@ -969,29 +969,29 @@ sub predict_metacyc_pathways{
 	my $ptype = exists $pid2info{$pid}->{ptype} ? $pid2info{$pid}->{ptype} : "";
 	$pathways{$pid}->{ptype} = $ptype;
 	$pathways{$pid}->{pname} = $pname;
-	
+
 	my @ecs = grep !/fam_all|fam_found|ptype|pname/, sort keys %{$pathways{$pid}};
 	foreach my $ec (@ecs){
 	    my $hits = $pathways{$pid}->{$ec}->{hits};
-	    
+
 	}
-	
+
     }
-    
+
     return \%pathways;
-    
+
 }
 
 sub output_profiles{
 
     my($seqHash, $outdir) = @_;
-    
+
     my $bin = "$FindBin::RealBin";
     my %taxon2genes_cds = ();
     my %taxon2genes_ssu = ();
     my %taxon2genes_lsu = ();
     my %pfam2genes = ();
-    
+
     my %pfam = ();
     my %tigrfam2genes = ();
     my %tigrfam = ();
@@ -1006,15 +1006,15 @@ sub output_profiles{
     my %stats = ();
     my %metabolic2genes = ();
     my %metabolic = ();
-    
+
     my %keggs = ();
     my %keggPathway2genes = ();
     my %metacycPathway2genes = ();
-    
-    
+
+
     for my $sid (keys %$seqHash) {
 	for my $f (@{$seqHash->{$sid}{FEATURE}}){
-    
+
 	    my $feature = $f->primary_tag;
 	    my $source = $f->source_tag;
 	    my $start = $f->start;
@@ -1025,35 +1025,35 @@ sub output_profiles{
 	    my $geneid = ($f->get_tag_values("ID"))[0];
 	    my $oc = $f->has_tag("genomedb_OC") ? ($f->get_tag_values("genomedb_OC"))[0] : "unknow";
 	    my $taxon = $oc;
-	    
+
 	    my $mdepth_col_count = $f->has_tag("mdepth_cols") ? $f->get_tag_values("mdepth_cols") : -1;
 	    my %sample2depth = ();
-	    
+
 	    for (my $i = 0; $i < $mdepth_col_count; $i++){
 		my $name = ($f->get_tag_values("mdepth_cols"))[$i];
 		my $depth = ($f->get_tag_values("mdepth_values"))[$i];
 		$stats{cds}->{$name} += $depth;
 		$sample2depth{$name} = $depth;
-		
+
 	    }
-	
+
 	    if($feature =~ /CDS/){
-		
+
 		$stats{cds}->{totalCount}++;
 		$taxon2genes_cds{$taxon}->{count}++;
-		
+
 		foreach my $name (keys %sample2depth){
 		    my $depth = $sample2depth{$name};
 		    $taxon2genes_cds{$taxon}->{$name} += $depth;
 		}
-		
+
 		if($f->has_tag("pfam_acc")){
 		    my $acc_count = $f->get_tag_values("pfam_acc");
 		    for (my $i = 0; $i < $acc_count; $i++){
 			my $acc = ($f->get_tag_values("pfam_acc"))[$i];
 			my $id = ($f->get_tag_values("pfam_id"))[$i];
 			my $desc = ($f->get_tag_values("pfam_desc"))[$i];
-			
+
 			if(not exists $pfam{$acc}){
 			    $pfam{$acc}->{ID} = $id;
 			    $pfam{$acc}->{Desc} = $desc;
@@ -1066,7 +1066,7 @@ sub output_profiles{
 		    }
 		}
 		if($f->has_tag("tigrfam_acc")){
-	    
+
 		    my $acc_count = $f->get_tag_values("tigrfam_acc");
 		    for (my $i = 0; $i < $acc_count; $i++){
 			my $acc = ($f->get_tag_values("tigrfam_acc"))[$i];
@@ -1146,7 +1146,7 @@ sub output_profiles{
 			    ($name) = @$row;
 			}
 			$sth->finish();
-			
+
 			if(not exists $go{$goid}){
 			    $go{$goid}->{name} = $name;
 			}
@@ -1158,7 +1158,7 @@ sub output_profiles{
 		    }
 		}
 		if($f->has_tag("metabolic_acc")){
-		    
+
 		    my $acc_count = $f->get_tag_values("metabolic_acc");
 		    for (my $i = 0; $i < $acc_count; $i++){
 			my $acc = ($f->get_tag_values("metabolic_acc"))[$i];
@@ -1171,7 +1171,7 @@ sub output_profiles{
 			    $metabolic{$acc}->{Compound} = $compound;
 			    $metabolic{$acc}->{Desc} = $desc;
 			}
-			
+
 			$metabolic2genes{$acc}->{count}++;
 			foreach my $name (keys %sample2depth){
 			    my $depth = $sample2depth{$name};
@@ -1204,12 +1204,12 @@ sub output_profiles{
 		    }
 		}
 	    }
-	    
+
 	    elsif($feature =~ /16SrRNA|18SrRNA/){
 		my $taxon = ($f->get_tag_values("rRNA_taxon"))[0];
 		$stats{ssu}->{totalCount}++;
 		$taxon2genes_ssu{$taxon}->{count}++;
-		
+
 		foreach my $name (keys %sample2depth){
 		    my $depth = $sample2depth{$name};
 		    $taxon2genes_ssu{$taxon}->{$name} += $depth;
@@ -1217,21 +1217,21 @@ sub output_profiles{
 		}
 	    }
 	    elsif($feature =~ /23SrRNA|28SrRNA/){
-		
+
 		my $taxon = ($f->get_tag_values("rRNA_taxon"))[0];
 		$stats{lsu}->{totalCount}++;
 		$taxon2genes_lsu{$taxon}->{count}++;
-		
+
 		foreach my $name (keys %sample2depth){
 		    my $depth = $sample2depth{$name};
 		    $taxon2genes_lsu{$taxon}->{$name} += $depth;
 		    $stats{lsu}->{$name} += $depth;
-		    
+
 		}
 	    }
 	}
     }
-    
+
     output_profile(\%stats, \%taxon2genes_cds, "cds", "taxon", $outdir);
     output_profile(\%stats, \%taxon2genes_ssu, "ssu", "taxon", $outdir, );
     output_profile(\%stats, \%taxon2genes_lsu, "lsu", "taxon", $outdir);
@@ -1244,9 +1244,9 @@ sub output_profiles{
 
     output_pathway_profile(\%stats, \%keggPathway2genes, "cds", "kegg", $outdir, $keggs);
     output_pathway_profile(\%stats, \%metacycPathway2genes, "cds", "metacyc", $outdir, $metacycs);
-    
+
     my @msamples = grep !/totalCount|totalAvgDepth/, sort keys %{$stats{ssu}};
-    
+
 ###########SSU
     my $cmd = "$^X $bin/output_tree_json.pl -i $outdir/taxon.ssu.profile.tab.txt -t Taxonomy> $outdir/taxon.ssu.tree.json;";
     $cmd .= "$^X $bin/output_sunburst_json.pl -i $outdir/taxon.ssu.profile.tab.txt -t Taxonomy -p $outdir/taxon.ssu.profile.sunburst;";
@@ -1257,7 +1257,7 @@ sub output_profiles{
     runcmd("$cmd");
     msg("******Finish running $cmd \n\n");
     output_treecol("$outdir/taxon.ssu.treecol.json", "Taxonomy", \@msamples);
-    
+
 ##########LSU
     $cmd = "$^X $bin/output_tree_json.pl -i $outdir/taxon.lsu.profile.tab.txt -t Taxonomy> $outdir/taxon.lsu.tree.json;";
     $cmd .= "$^X $bin/output_sunburst_json.pl -i $outdir/taxon.lsu.profile.tab.txt -t Taxonomy -p $outdir/taxon.lsu.profile.sunburst;";
@@ -1268,32 +1268,32 @@ sub output_profiles{
     runcmd("$cmd");
     msg("******Finish running $cmd \n\n");
     output_treecol("$outdir/taxon.lsu.treecol.json", "Taxonomy", \@msamples);
-    
+
 ##########CDS
     $cmd = "$^X $bin/output_tree_json.pl -i $outdir/taxon.cds.profile.tab.txt -t Taxonomy> $outdir/taxon.cds.tree.json;";
     $cmd .= "$^X $bin/output_sunburst_json.pl -i $outdir/taxon.cds.profile.tab.txt -t Taxonomy -p $outdir/taxon.cds.profile.sunburst;";
     if(@msamples > 0){
 	$cmd .= "$^X $bin/output_sunburst_json.abund.pl -i $outdir/taxon.cds.profile.tab.txt -t Taxonomy -p $outdir/taxon.cds.profile.sunburst";
     }
-    
+
     msg("******start running $cmd\n");
     runcmd("$cmd");
     msg("******Finish running $cmd \n\n");
     output_treecol("$outdir/taxon.cds.treecol.json","Taxonomy", \@msamples);
-    
-    
-###########metabolic                                                                                                                                                                                               
+
+
+###########metabolic
     $cmd = "$^X $bin/output_tree_json.pl -i $outdir/metabolic.cds.profile.tab.txt -t Compound-process-gene> $outdir/metabolic.cds.profile.tree.json;";
     $cmd .= "$^X $bin/output_sunburst_json.pl -i $outdir/metabolic.cds.profile.tab.txt -t Compound-process-gene -p $outdir/metabolic.cds.profile.sunburst;";
     if(@msamples > 0){
 	$cmd .= "$^X $bin/output_sunburst_json.abund.pl -i $outdir/metabolic.cds.profile.tab.txt -t  Foam -p $outdir/metabolic.cds.profile.sunburst";
     }
-    
+
     msg("******start running $cmd\n");
     runcmd("$cmd");
     msg("******Finish running $cmd \n\n");
     output_treecol("$outdir/metabolic.cds.treecol.json", "Metabolic_genes", \@msamples);
- 
+
 }
 
 sub output_profile{
@@ -1303,7 +1303,7 @@ sub output_profile{
     my $total_count = $stats{$feature}->{totalCount};
     my $total_depth = exists $stats{$feature}->{totalAvgDepth} ?  $stats{$feature}->{totalAvgDepth} : 0;
     my @msamples = grep !/totalCount|totalAvgDepth/, sort keys %{$stats{$feature}};
-    
+
     my @header = ("Count", "Count_pct", "Abund", "Abund_pct");
     unshift(@header, "#Taxon") if($attr =~ /taxon/);
     unshift(@header, "#Accession", "ID", "Description") if $attr =~ /pfam/;
@@ -1316,25 +1316,25 @@ sub output_profile{
 	push(@header, "Abund\_$_");
 	push(@header, "Abund\_pct_$_");
     }
-    
+
     open  my $data_tab, ">", "$outdir/$attr.$feature.profile.tab.txt" or die "Could not open $outdir/$attr.$feature.profile.tab.txt to write, $!\n";
     print $data_tab join("\t", @header), "\n";
-    
+
     open my $data_json, ">", "$outdir/$attr.$feature.profile.datatable.json" or die "Could not open $outdir/$attr.$feature.profile.datatable.json to write, $!\n";
 
     #output tablecol
     output_tablecols($data_json, \@msamples, $attr);
-    
+
     print $data_json "\ndata = [\n";
     my $keyCount = keys %data;
-    
+
     my $index = 0;
     #my @cols = ();
     for my $key (keys %data){
 	my @cols = ();
 	push(@cols, $key) if $attr !~ /metabolic/;
 	print $data_json (' ' x 2) . "{\n";
-	
+
 	print $data_json (' ' x 3) . "\"taxon\": \"$key\",\n" if($attr =~ /taxon/);
 	print $data_json (' ' x 3) . "\"accession\": \"$key\",\n" if($attr =~ /pfam|tigrfam/);
 	print $data_json (' ' x 3) . "\"gene\": \"$key\",\n" if($attr =~ /metabolic/);
@@ -1346,7 +1346,7 @@ sub output_profile{
 		my $id = exists $iddesc->{$key}->{ID} ? $iddesc->{$key}->{ID} : "";
 		my $desc = exists $iddesc->{$key}->{Desc} ? $iddesc->{$key}->{Desc} : "";
 		push(@cols, ($id, "\"$desc\""));
-		
+
 		print $data_json (' ' x 3) . "\"id\": \"$id\",\n";
 		print $data_json (' ' x 3) . "\"desc\": \"$desc\",\n";
 	    }
@@ -1362,7 +1362,7 @@ sub output_profile{
 		my $de = exists $iddesc->{$key}->{de} ? $iddesc->{$key}->{de} : "";
 		$name =~ s/\""/\\\"/g;
 		$de =~ s/\""/\\\"/g;
-		
+
 		push(@cols, ($name, "\"$de\""));
 		print $data_json (' ' x 3) . "\"name\": \"$name\",\n";
 		print $data_json (' ' x 3) . "\"definition\": \"$de\",\n";
@@ -1379,7 +1379,7 @@ sub output_profile{
 		push(@cols, ("\"$name\""));
 		print $data_json (' ' x 3) . "\"name\": \"$name\",\n";
 	    }
-	    
+
 	    elsif($attr eq "metabolic"){
                 my $compound = exists $iddesc->{$key}->{Compound} ? $iddesc->{$key}->{Compound} : "";
                 my $process = exists $iddesc->{$key}->{Process} ? $iddesc->{$key}->{Process} : "";
@@ -1389,20 +1389,20 @@ sub output_profile{
                 print $data_json (' ' x 3) . "\"process\": \"$process\",\n";
             }
 	}
-	
+
 	my $count = $data{$key}->{count};
 	my $count_pct = sprintf("%.2f",100* $count/$total_count);
 	my $totalAvgDepth = exists $data{$key}->{totalAvgDepth} ? sprintf("%.2f",$data{$key}->{totalAvgDepth}) : 0;
 	my $totalAvgDepth_pct = $total_depth != 0 ? sprintf("%.2f",100* $totalAvgDepth/$total_depth) : 0;
 	push(@cols, ($count, $count_pct, $totalAvgDepth, $totalAvgDepth_pct));
-	
-	
+
+
 	print $data_json (' ' x 3) . "\"count\": $count,\n";
 	print $data_json (' ' x 3) . "\"countpct\": $count_pct,\n";
 	print $data_json (' ' x 3) . "\"abund\": $totalAvgDepth,\n";
 	print $data_json (' ' x 3) . "\"abundpct\": $totalAvgDepth_pct,\n";
-	
-	my $i = 0; 
+
+	my $i = 0;
 	for my $name (sort keys %{$data{$key}}){
 	    next if $name eq "count";
 	    next if $name eq "totalAvgDepth";
@@ -1411,7 +1411,7 @@ sub output_profile{
 	    #print STDERR "****************$name, $feature, $abund, $total_abund\n";
 	    my $abund_pct = $total_abund > 0 ? sprintf("%.2f",100* $abund/$total_abund) : 0;
 	    push(@cols, ($abund, $abund_pct));
-	    
+
 #print $data_tab "\t$abund\t$abund_pct";
 	    if($i == @msamples - 1){
 		print $data_json (' ' x 2) . "\"abund_$name\": $abund,\n";
@@ -1420,9 +1420,9 @@ sub output_profile{
 	    else{
 		print $data_json (' ' x 2) . "\"abund_$name\": $abund,\n";
 		print $data_json (' ' x 2) . "\"abundpct_$name\": $abund_pct,\n";
-		
+
 	    }
-	    
+
 	    $i++;
 	}
 	if($index == $keyCount - 1){
@@ -1431,17 +1431,17 @@ sub output_profile{
 	else{
 	    print $data_json (' ' x 2) . "},\n";
 	}
-	
+
 	print $data_tab join("\t", @cols), "\n";
 	$index++;
     }
-    
+
     print $data_json (' ' x 2) . "]\n";
-    
+
     close($data_tab);
 
-    
-    
+
+
 
 
 }
@@ -1451,7 +1451,7 @@ sub output_treecol{
     my ($outFile, $firstcol_str, $samples) = @_;
     #msg("Writing to $outFile");
     open (TREECOL,">$outFile")or die "Could not open $outFile to write, $!\n";
-    
+
     my @msamples = @$samples;
      my %treecol = ();
     $treecol{"Count"} = "Count";
@@ -1502,9 +1502,9 @@ sub output_pathway_profile{
     my %data = %$dataref;
     my $total_count = $stats{$feature}->{totalCount};
     my $total_depth = exists $stats{$feature}->{totalAvgDepth} ? $stats{$feature}->{totalAvgDepth} : 0;
-    
+
     my @msamples = grep !/totalCount|totalAvgDepth/, sort keys %{$stats{$feature}};
-    
+
     my @header = ("Count", "Count_pct", "Abund", "Abund_pct");
     unshift(@header, "#Pathway_id", "Name", "KOs", "total_family", "total_family_found") if($attr =~ /kegg/);
     unshift(@header, "#Pathway_id", "Type", "Name", "ECs", "total_family", "total_family_found") if($attr =~ /metacyc/);
@@ -1513,27 +1513,27 @@ sub output_pathway_profile{
 	push(@header, "Abund\_$_");
 	push(@header, "Abund\_pct_$_");
     }
-    
+
     open  my $data_tab, ">", "$outdir/$attr.$feature.profile.tab.txt" or die "Could not open $outdir/$attr.$feature.profile.tab.txt to write, $!\n";
     print $data_tab join("\t", @header), "\n";
     open my $data_json, ">", "$outdir/$attr.$feature.profile.datatable.json" or die "Could not open $outdir/$attr.$feature.profile.datatable.json to write, $!\n";
 
     #output tablecol
     output_tablecols($data_json, \@msamples, $attr);
-    
+
     print $data_json "\ndata = [\n";
     my $keyCount = keys %data;
-    
+
     my $index = 0;
     #my @cols = ();
     for my $key (keys %data){
 	my @cols = ();
 	push(@cols, $key);
-	
+
 	print $data_json (' ' x 2) . "{\n";
 	print $data_json (' ' x 3) . "\"pid\": \"$key\",\n";
-	
-		
+
+
 	if(defined $iddesc){
 	    if($attr eq "kegg"){
 		my $name = exists $iddesc->{$key}->{pname} ? $iddesc->{$key}->{pname} : "";
@@ -1541,9 +1541,9 @@ sub output_pathway_profile{
 		my $fam_found = exists $iddesc->{$key}->{fam_found} ? $iddesc->{$key}->{fam_found} : "";
 		my @kos = grep !/pname|fam_found|fam_all/, sort keys %{$keggs->{$key}};
 		my $kos_str = join("+", @kos);
-		
+
 		push(@cols, ("\"$name\"",$kos_str, $fam_all, $fam_found));
-		
+
 		print $data_json (' ' x 3) . "\"name\": \"$name\",\n";
 		print $data_json (' ' x 3) . "\"fam_all\": \"$fam_all\",\n";
 		print $data_json (' ' x 3) . "\"fam_found\": \"$fam_found\",\n";
@@ -1554,33 +1554,33 @@ sub output_pathway_profile{
 		my $type = exists $iddesc->{$key}->{ptype} ? $iddesc->{$key}->{ptype} : "";
 		my $fam_all = exists $iddesc->{$key}->{fam_all} ? $iddesc->{$key}->{fam_all} : "";
 		my $fam_found = exists $iddesc->{$key}->{fam_found} ? $iddesc->{$key}->{fam_found} : "";
-		
+
 		my @ecs = grep !/pname|fam_found|fam_all|ptype/, sort keys %{$metacycs->{$key}};
 		my $ecs_str = join("+", @ecs);
-		
+
 		push(@cols, ("\"$type\"", "\"$name\"",$ecs_str, $fam_all, $fam_found));
 		print $data_json (' ' x 3) . "\"type\": \"$type\",\n";
 		print $data_json (' ' x 3) . "\"name\": \"$name\",\n";
-		
+
 		print $data_json (' ' x 3) . "\"fam_all\": \"$fam_all\",\n";
 		print $data_json (' ' x 3) . "\"fam_found\": \"$fam_found\",\n";
 	    }
-	    
+
 	}
-	
+
 	my $count = $data{$key}->{count};
 	my $count_pct = sprintf("%.2f",100* $count/$total_count);
 	my $totalAvgDepth = exists $data{$key}->{totalAvgDepth} ? sprintf("%.2f",$data{$key}->{totalAvgDepth}) : 0;
 	my $totalAvgDepth_pct = $total_depth != 0 ? sprintf("%.2f",100* $totalAvgDepth/$total_depth) : 0;
 	push(@cols, ($count, $count_pct, $totalAvgDepth, $totalAvgDepth_pct));
-	
-	
+
+
 	print $data_json (' ' x 3) . "\"count\": $count,\n";
 	print $data_json (' ' x 3) . "\"countpct\": $count_pct,\n";
 	print $data_json (' ' x 3) . "\"abund\": $totalAvgDepth,\n";
 	print $data_json (' ' x 3) . "\"abundpct\": $totalAvgDepth_pct,\n";
-	
-	my $i = 0; 
+
+	my $i = 0;
 	for my $name (sort keys %{$data{$key}}){
 	    next if $name eq "count";
 	    next if $name eq "totalAvgDepth";
@@ -1590,7 +1590,7 @@ sub output_pathway_profile{
 	    my $abund_pct = $total_abund > 0 ? sprintf("%.2f",100* $abund/$total_abund) : 0;
 	    #my $abund_pct = sprintf("%.2f",100* $abund/$total_abund);
 	    push(@cols, ($abund, $abund_pct));
-	    
+
 #print $data_tab "\t$abund\t$abund_pct";
 	    if($i == @msamples - 1){
 		print $data_json (' ' x 2) . "\"abund_$name\": $abund,\n";
@@ -1599,9 +1599,9 @@ sub output_pathway_profile{
 	    else{
 		print $data_json (' ' x 2) . "\"abund_$name\": $abund,\n";
 		print $data_json (' ' x 2) . "\"abundpct_$name\": $abund_pct,\n";
-		
+
 	    }
-	    
+
 	    $i++;
 	}
 	if($index == $keyCount - 1){
@@ -1610,17 +1610,17 @@ sub output_pathway_profile{
 	else{
 	    print $data_json (' ' x 2) . "},\n";
 	}
-	
+
 	print $data_tab join("\t", @cols), "\n";
 	$index++;
     }
-    
+
     print $data_json (' ' x 2) . "]\n";
-    
+
     close($data_tab);
 
-    
-    
+
+
 
 
 }
@@ -1630,9 +1630,9 @@ sub output_tablecols{
 
     my ($jsonFileHandler, $samples, $attr) = @_;
     my @msamples = @$samples;
-    
+
     print $jsonFileHandler "tablecol = [\n";
-    
+
     if($attr eq "taxon"){
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Taxon\",\n";
@@ -1649,12 +1649,12 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "}\n";
 
         print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Name\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"name\"\n";
         print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Fam_all\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"fam_all\"\n";
@@ -1673,7 +1673,7 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 6),"return data;\n";
 	print $jsonFileHandler (' ' x 4),"}\n";
 	print $jsonFileHandler (' ' x 2),"}\n";
-	
+
         print $jsonFileHandler "},\n";
     }
     elsif($attr eq "metacyc"){
@@ -1684,17 +1684,17 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 4), "return \'<a href=\"https://biocyc.org/META/NEW-IMAGE?type=PATHWAY&object=\' + data + \'\">\' + data + \'</a>\';\n";
 	print $jsonFileHandler (' ' x 2), "}\n";
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Type\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"type\"\n";
         print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Name\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"name\"\n";
         print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Fam_all\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"fam_all\"\n";
@@ -1705,19 +1705,19 @@ sub output_tablecols{
         print $jsonFileHandler (' ' x 2), "\"data\": \"fam_found\"\n";
 	print $jsonFileHandler "},\n";
     }
-    
+
     elsif($attr eq "metabolic"){
-        	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Compound\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"compound\"\n";
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Process\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"process\"\n";
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
         print $jsonFileHandler (' ' x 2), "\"title\": \"Gene\",\n";
         print $jsonFileHandler (' ' x 2), "\"data\": \"gene\"\n";
@@ -1729,28 +1729,28 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Accession\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"accession\"\n";
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"ID\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"id\",\n";
 	print $jsonFileHandler (' ' x 2), "\"render\": function(data,type,full,meta){\n";
 	print $jsonFileHandler (' ' x 4), "return \'<a href=\"https://pfam.xfam.org/family/' + data + \'\">\' + data + \'</a>\';\n";
 	print $jsonFileHandler (' ' x 2), "}\n";
-	
+
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Description\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"desc\"\n";
 	print $jsonFileHandler "},\n";
-	
-	
+
+
     }
     elsif($attr eq "tigrfam"){
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Accession\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"accession\",\n";
-	
+
 	print $jsonFileHandler (' ' x 2), "\"render\": function(data,type,full,meta){\n";
 	print $jsonFileHandler (' ' x 4), "return \'<a href=\"http://tigrfams.jcvi.org/cgi-bin/HmmReportPage.cgi?acc=' + data + \'\">\' + data + \'</a>\';\n";
 	print $jsonFileHandler (' ' x 2), "}\n";
@@ -1760,7 +1760,7 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Name\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"name\"\n";
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Function\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"desc\"\n";
@@ -1771,7 +1771,7 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "\"title\": \"KO\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"koid\",\n";
 
-	
+
 	print $jsonFileHandler (' ' x 2), "\"render\": function(data,type,full,meta){\n";
 	print $jsonFileHandler (' ' x 4), "return \'<a href=\"https://www.genome.jp/dbget-bin/www_bget?ko\:' + data + \'\">\' + data + \'</a>\';\n";
 	print $jsonFileHandler (' ' x 2), "}\n";
@@ -1782,7 +1782,7 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Name\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"name\"\n";
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Definition\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"definition\"\n";
@@ -1792,11 +1792,11 @@ sub output_tablecols{
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"EC\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"ecid\",\n";
-	
+
 	print $jsonFileHandler (' ' x 2), "\"render\": function(data,type,full,meta){\n";
 	print $jsonFileHandler (' ' x 4), "return \'<a href=\"https://enzyme.expasy.org/EC/' + data + \'\">\' + data + \'</a>\';\n";
 	print $jsonFileHandler (' ' x 2), "}\n";
-		
+
 	print $jsonFileHandler "},\n";
 
 	print $jsonFileHandler "{\n";
@@ -1812,7 +1812,7 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "\"render\": function(data,type,full,meta){\n";
 	print $jsonFileHandler (' ' x 4), "return \'<a href=\"http://amigo.geneontology.org/amigo/term/' + data + \'\">\' + data + \'</a>\';\n";
 	print $jsonFileHandler (' ' x 2), "}\n";
-		
+
 	print $jsonFileHandler "},\n";
 
 	print $jsonFileHandler "{\n";
@@ -1820,7 +1820,7 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "\"data\": \"name\"\n";
 	print $jsonFileHandler "},\n";
     }
-    
+
     print $jsonFileHandler "{\n";
     print $jsonFileHandler (' ' x 2), "\"title\": \"Count\",\n";
     print $jsonFileHandler (' ' x 2), "\"data\": \"count\"\n";
@@ -1838,21 +1838,21 @@ sub output_tablecols{
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Abund\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"abund\"\n";
 	print $jsonFileHandler "},\n";
-	
+
 	print $jsonFileHandler "{\n";
 	print $jsonFileHandler (' ' x 2), "\"title\": \"Abund%\",\n";
 	print $jsonFileHandler (' ' x 2), "\"data\": \"abundpct\"\n";
 	print $jsonFileHandler "},\n";
-	
-	
-	
+
+
+
 	for my $i (0 .. $#msamples){
 	    print $jsonFileHandler "{\n";
-	    
+
 	    print $jsonFileHandler (' ' x 2),"\"title\": \"Abund\_$msamples[$i]\",\n";
 	    print $jsonFileHandler (' ' x 2),"\"data\": \"abund\_$msamples[$i]\"\n";
 	    print $jsonFileHandler "},\n";
-	    
+
 	    print $jsonFileHandler "{\n";
 	    print $jsonFileHandler (' ' x 2),"\"title\": \"Abund\_$msamples[$i]%\",\n";
 	    print $jsonFileHandler (' ' x 2),"\"data\": \"abundpct\_$msamples[$i]\"\n";
@@ -1874,15 +1874,15 @@ sub output_gff{
 
     my ($seqHash,$outdir) = @_;
     my $gffver = 3;
-    
+
     msg("Writing master.gff.txt file to $outdir");
     open my $master_gff_fh, '>', "$outdir/master.gff.txt";
     my $master_gff_factory = Bio::Tools::GFF->new(-gff_version=>$gffver);
     print $master_gff_fh "##gff-version $gffver\n";
-    
+
     for my $sid (sort {$seqHash{$b}{DNA}->length <=> $seqHash{$a}{DNA}->length} keys %$seqHash) {
 	for my $f ( sort { $a->start <=> $b->start } @{ $seqHash->{$sid}{FEATURE} }) {
-	    
+
 	    foreach my  $ftag ($f->all_tags()){
 		if($ftag =~ /foam_ecs|foam_kos|foam_target|sprot_kegg|sprot_kos|sprot_ec|sprot_go|pfam_go|tigrfam_ec|tigrfam_mainrole|tigrfam_sub1role|_target/){
 		    $f->remove_tag($ftag);
