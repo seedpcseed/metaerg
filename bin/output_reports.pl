@@ -30,7 +30,7 @@ my $txtdir = "$bin/../txt";
 &GetOptions(
     "g=s" =>\$gff,
     "f=s" =>\$fasta,
-    "o=s" =>\$outdir
+    "o=s" =>\$outdir,
     "d=s" =>\$sqlite_dir
     );
 
