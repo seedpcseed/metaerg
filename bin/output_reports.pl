@@ -31,6 +31,7 @@ my $txtdir = "$bin/../txt";
     "g=s" =>\$gff,
     "f=s" =>\$fasta,
     "o=s" =>\$outdir
+    "d=s" =>\$sqlite_dir
     );
 
 ($gff && $fasta && $outdir) ||
@@ -42,7 +43,8 @@ my $txtdir = "$bin/../txt";
     "  perl $0 \n".
     "  -g <input gff file: all.gff file produced by metaerg>\n".
     "  -f <fasta format contig file, the features were assocaited with this input file>\n".
-    "  -o <output dir>\n";
+    "  -o <output dir>\n".
+    "  -d <sql3 database location>\n";
     
 my $datadir = "$outdir/data";
 
