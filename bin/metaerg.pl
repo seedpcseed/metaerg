@@ -212,7 +212,7 @@ msg("Start outputing report files");
 
 
 
-$cmd = "$^X $bin/output_reports.pl -g $datadir/all.gff -o $outdir -f $outdir/$prefix.fna";
+$cmd = "$^X $bin/output_reports.pl -g $datadir/all.gff -o $outdir -f $outdir/$prefix.fna -d $sqlite_dir";
 
 
 runcmd("$cmd");
@@ -824,4 +824,3 @@ sub version {
     print STDERR "$EXE $VERSION\n";
     exit;
 }
-
