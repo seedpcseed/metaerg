@@ -619,7 +619,7 @@ sub output_geneAnnotation{
 		    
 		}
 		if(exists $annot_tab_file_handler{"rRNA"} && $type =~ /SrRNA/){
-		    my $count = $f->get_tag_values("rRNA_taxon");
+		    my $count = $f->has_tag("rRNA_taxon") ? $f->get_tag_values("rRNA_taxon") : 0;
 		    for (my $i = 0; $i < $count; $i++){
 			#my $name = ($f->get_tag_values("Name"))[$i];
 			my $taxon = ($f->get_tag_values("rRNA_taxon"))[$i];
