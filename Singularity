@@ -9,20 +9,11 @@ LABEL version="1.0.4"
 PATH=$PATH:/NGStools:/NGStools/MinPath:/NGStools/aragorn:/NGStools/minced:/NGStools/Prodigal:/NGStools/ncbi-blast-2.9.0+/bin:/NGStools/diamond:/NGStools/hmmer/src:/NGStools/MinPath:/NGStools/metaerg/bin
 
 %post
-apt-get update && apt-get install -y
-    autoconf \
-    #build-essential \
-    cpanminus \
-    gcc-multilib \
-    git \
-    make \
-    openjdk-8-jdk \
-    perl \
-    python \
-    sqlite3 \
-    tar \
-    unzip \
-    wget
+apt-get update && apt-get install -y autoconf
+apt-get install -y build-essential
+apt-get install -y perl
+apt-get install -y cpanminus
+apt-get install -y gcc-multilib git make openjdk-8-jdk python sqlite3 tar unzip wget
 
 apt-get update && apt-get install -y \
     expat \
