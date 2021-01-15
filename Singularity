@@ -2,8 +2,8 @@ Bootstrap: docker
 From: ubuntu:19.04
 
 %maintenance
-MAINTAINER Pat Seed
-LABEL version="1.0.4"
+    Author Pat Seed
+    Version 1.0.4
 
 %environment
 PATH=$PATH:/NGStools:/NGStools/MinPath:/NGStools/aragorn:/NGStools/minced:/NGStools/Prodigal:/NGStools/ncbi-blast-2.9.0+/bin:/NGStools/diamond:/NGStools/hmmer/src:/NGStools/MinPath:/NGStools/metaerg/bin
