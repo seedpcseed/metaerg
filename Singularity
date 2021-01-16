@@ -1,19 +1,16 @@
 Bootstrap: docker
-From: ubuntu:19.04
-
-%maintenance
-    Author Pat Seed
-    Version 1.0.4
+From: ubuntu:18.04
 
 %environment
 PATH=$PATH:/NGStools:/NGStools/MinPath:/NGStools/aragorn:/NGStools/minced:/NGStools/Prodigal:/NGStools/ncbi-blast-2.9.0+/bin:/NGStools/diamond:/NGStools/hmmer/src:/NGStools/MinPath:/NGStools/metaerg/bin
+export MinPath="/NGStools/MinPath"
 
 %post
+
 apt-get update && apt-get install -y autoconf
-apt-get install -y build-essential
 apt-get install -y perl
 apt-get install -y cpanminus
-apt-get install -y gcc-multilib git make openjdk-8-jdk python sqlite3 tar unzip wget
+apt-get install -y gcc-multilib git make openjdk-8-jdk python sqlite3 tar unzip wget bioperl
 
 apt-get update && apt-get install -y \
     expat \
@@ -27,13 +24,15 @@ apt-get update && apt-get install -y \
     libxslt1-dev \
     zlib1g-dev
 
-cpanm Bio::Perl \
-    DBI \
+cpanm DBI \
     Archive::Extract \
     DBD::SQLite \
     File::Copy::Recursive \
-    Bio::DB::EUtilities \
-    LWP::Protocol::https
+    LWP::Protocol::https \
+    SWISS::Entry \
+    SWISS::KW
+
+mkdir NGStools && cd NGStools
 
 git clone https://git.code.sf.net/p/swissknife/git swissknife-git && \
     cd swissknife-git && \
@@ -89,8 +88,7 @@ wget http://ebg.ucalgary.ca/metaerg/minpath1.4.tar.gz && \
     cd /NGStools
 
 #metaerg
-git clone https://github.com/seedpcseed/metaerg.git
-git checkout a4bad9d026fe2dbec817be5a74d856c1ff33be83
+git clone https://github.com/seedpcseed/metaerg
 
 # Clean
 apt-get remove -y autoconf \
@@ -101,4 +99,5 @@ apt-get remove -y autoconf \
     apt-get autoclean -y
 
 %runscript
+export MinPath="/NGStools/MinPath"
 exec "$@"
