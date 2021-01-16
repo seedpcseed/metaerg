@@ -90,6 +90,7 @@ wget http://ebg.ucalgary.ca/metaerg/minpath1.4.tar.gz && \
 
 #metaerg
 git clone https://github.com/seedpcseed/metaerg.git
+git checkout a4bad9d026fe2dbec817be5a74d856c1ff33be83
 
 # Clean
 apt-get remove -y autoconf \
