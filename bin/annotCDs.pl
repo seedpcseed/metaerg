@@ -96,8 +96,9 @@ sub cds_diamondSearch{
     my $bls_prefix = "$outdir/$dbname";
     my $blstable = "$bls_prefix\.blasttable";
 
-    my $cmd = "diamond blastp -k 1 --quiet --masking $mask -p $cpus -q $faa -d $db -e $evalue -f 6 qseqid sseqid qlen qstart qend sstart send qframe pident bitscore evalue qcovhsp > $blstable 2> /dev/null";
+    my $cmd = "diamond blastp -k 1 --quiet --masking $mask -p $cpus -q $faa -d $db -e $evalue -f 6 qseqid sseqid qlen qstart qend sstart send qframe pident bitscore evalue qcovhsp > $blstable ";
     # removed --tmpdir /dev/shm because it was not working with singularity container
+    # remove 2> /dev/null at the end
 
     #msg("Will use diamond blastp search against $dbname:$cmd");
     if(! -e "$blstable"){
@@ -149,10 +150,12 @@ sub cds_hmmerSearch{
     #my $cmd = "hmmsearch --notextw --acc $hmm_cutoff --cpu $cpus $db $faa  > \Q$hmmout\E 2> /dev/null";
     my $cmd = "";
     if($hmm_cutoff =~ /\S+/){
-	$cmd = "hmmsearch --notextw --acc $hmm_cutoff --cpu $cpus --tblout \Q$hmmout\E $db $faa > /dev/null 2>&1";
+	$cmd = "hmmsearch --notextw --acc $hmm_cutoff --cpu $cpus --tblout \Q$hmmout\E $db $faa ";
+  # removed > /dev/null 2>&1 at the end
     }
     else{
-	$cmd = "hmmsearch --notextw --acc -E $hmm_evalue_cutoff --domE $hmm_evalue_cutoff --incE  $hmm_evalue_cutoff  --incdomE $hmm_evalue_cutoff --cpu $cpus --tblout \Q$hmmout\E $db $faa > /dev/null 2>\&1";
+	$cmd = "hmmsearch --notextw --acc -E $hmm_evalue_cutoff --domE $hmm_evalue_cutoff --incE  $hmm_evalue_cutoff  --incdomE $hmm_evalue_cutoff --cpu $cpus --tblout \Q$hmmout\E $db $faa";
+  # removed > /dev/null 2>\&1 at the end 
     }
 
     #msg("Will use hmmsearch against $dbname:$cmd");
