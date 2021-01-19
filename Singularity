@@ -28,9 +28,7 @@ cpanm DBI \
     Archive::Extract \
     DBD::SQLite \
     File::Copy::Recursive \
-    LWP::Protocol::https \
-    SWISS::Entry \
-    SWISS::KW
+    LWP::Protocol::https
 
 mkdir NGStools && cd NGStools
 
